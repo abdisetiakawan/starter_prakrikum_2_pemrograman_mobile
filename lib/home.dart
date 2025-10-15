@@ -17,9 +17,17 @@ import 'package:intl/intl.dart';
 
 import 'model/product.dart';
 import 'model/products_repository.dart';
+import 'supplemental/product_search_delegate.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({
+    required this.currentThemeMode,
+    required this.onThemeModeChanged,
+    Key? key,
+  }) : super(key: key);
+
+  final ThemeMode currentThemeMode;
+  final ValueChanged<ThemeMode> onThemeModeChanged;
 
   List<Card> _buildGridCards(BuildContext context) {
     List<Product> products = ProductsRepository.loadProducts(Category.all);
@@ -35,10 +43,9 @@ class HomePage extends StatelessWidget {
     return products.map((product) {
       return Card(
         clipBehavior: Clip.antiAlias,
-        // TODO: Adjust card heights (103)
         child: Column(
-          // TODO: Center items on the card (103)
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
             AspectRatio(
               aspectRatio: 18 / 11,
@@ -48,24 +55,27 @@ class HomePage extends StatelessWidget {
                 fit: BoxFit.fitWidth,
               ),
             ),
+            const SizedBox(height: 12.0),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
                 child: Column(
-                  // TODO: Align labels to the bottom and center (103)
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // TODO: Change innermost Column (103)
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    // TODO: Handle overflowing labels (103)
                     Text(
                       product.name,
-                      style: theme.textTheme.titleLarge,
+                      style: theme.textTheme.titleMedium,
+                      overflow: TextOverflow.ellipsis,
                       maxLines: 1,
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8.0),
+                    const SizedBox(height: 6.0),
                     Text(
                       formatter.format(product.price),
-                      style: theme.textTheme.titleSmall,
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.secondary,
+                      ),
                     ),
                   ],
                 ),
@@ -77,9 +87,58 @@ class HomePage extends StatelessWidget {
     }).toList();
   }
 
+  IconData _iconForThemeMode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto;
+      case ThemeMode.light:
+        return Icons.wb_sunny_outlined;
+      case ThemeMode.dark:
+        return Icons.nightlight_round;
+    }
+  }
+
+  String _labelForThemeMode(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return 'Otomatis (Sistem)';
+      case ThemeMode.light:
+        return 'Terang';
+      case ThemeMode.dark:
+        return 'Gelap';
+    }
+  }
+
+  Future<void> _showSearch(BuildContext context) async {
+    final Product? selectedProduct = await showSearch<Product?>(
+      context: context,
+      delegate: ProductSearchDelegate(
+        products: ProductsRepository.loadProducts(Category.all),
+      ),
+    );
+    if (selectedProduct == null) {
+      return;
+    }
+    final NumberFormat formatter = NumberFormat.simpleCurrency(
+      locale: Localizations.localeOf(context).toString(),
+    );
+    final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            '${selectedProduct.name} • ${formatter.format(selectedProduct.price)}',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
   // TODO: Add a variable for Category (104)
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     // TODO: Return an AsymmetricView (104)
     // TODO: Pass Category variable to AsymmetricView (104)
     return Scaffold(
@@ -91,14 +150,60 @@ class HomePage extends StatelessWidget {
           ),
           onPressed: () {},
         ),
-        title: const Text('SHRINE'),
+        title: Text(
+          'Abdi Setiawan Shop',
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
         actions: <Widget>[
           IconButton(
             icon: const Icon(
               Icons.search,
               semanticLabel: 'search',
             ),
-            onPressed: () {},
+            onPressed: () => _showSearch(context),
+          ),
+          PopupMenuButton<ThemeMode>(
+            tooltip: 'Pilih tema',
+            icon: Icon(
+              _iconForThemeMode(currentThemeMode),
+              semanticLabel: 'change theme',
+            ),
+            onSelected: onThemeModeChanged,
+            itemBuilder: (BuildContext context) {
+              return ThemeMode.values.map((ThemeMode mode) {
+                final bool selected = mode == currentThemeMode;
+                return PopupMenuItem<ThemeMode>(
+                  value: mode,
+                  child: Row(
+                    children: <Widget>[
+                      Icon(
+                        _iconForThemeMode(mode),
+                        color: selected ? theme.colorScheme.primary : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _labelForThemeMode(mode),
+                          style: selected
+                              ? theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                )
+                              : null,
+                        ),
+                      ),
+                      if (selected)
+                        Icon(
+                          Icons.check,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                    ],
+                  ),
+                );
+              }).toList();
+            },
           ),
           IconButton(
             icon: const Icon(

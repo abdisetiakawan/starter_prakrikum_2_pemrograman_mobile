@@ -37,23 +37,24 @@ class _LoginPageState extends State<LoginPage> {
               children: <Widget>[
                 Image.asset('assets/diamond.png'),
                 const SizedBox(height: 16.0),
-                const Text('SHRINE'),
+                Text(
+                  'Shrine',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ],
             ),
             const SizedBox(height: 120.0),
-            // TODO: Remove filled: true values (103)
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
-                filled: true,
                 labelText: 'Username',
               ),
+              textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: 12.0),
             TextField(
               controller: _passwordController,
               decoration: const InputDecoration(
-                filled: true,
                 labelText: 'Password',
               ),
               obscureText: true,
@@ -62,17 +63,29 @@ class _LoginPageState extends State<LoginPage> {
             OverflowBar(
               alignment: MainAxisAlignment.end,
               children: <Widget>[
-                // TODO: Add a beveled rectangular border to CANCEL (103)
                 TextButton(
+                  style: TextButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                    ),
+                  ),
                   child: const Text('CANCEL'),
                   onPressed: () {
                     _usernameController.clear();
                     _passwordController.clear();
                   },
                 ),
-                // TODO: Add an elevation to NEXT (103)
-                // TODO: Add a beveled rectangular border to NEXT (103)
                 ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 28.0, vertical: 12.0),
+                    elevation: 6.0,
+                    shape: const BeveledRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                    ),
+                  ),
                   child: const Text('NEXT'),
                   onPressed: () {
                     Navigator.pop(context);
